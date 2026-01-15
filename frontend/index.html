@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Dorking AI - Exposure Detection</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        h1 {
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        textarea,
+        input[type="file"],
+        input[type="checkbox"] {
+            margin-bottom: 15px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 80px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .btn:disabled {
+            background-color: #94a3b8;
+        }
+
+        .results {
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f1f5f9;
+        }
+
+        .risk-HIGH {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .risk-MEDIUM {
+            color: #f59e0b;
+            font-weight: bold;
+        }
+
+        .risk-LOW {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .disclaimer {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-top: 10px;
+        }
+
+        .finding-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-email {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-aws_key {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-google_api_key {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-github_token {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-openai_key {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge-private_key {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-password_alike {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+
+        .badge-sql_dump {
+            background: #fed7aa;
+            color: #9a3412;
+        }
+
+        .badge-env_exposure {
+            background: #fecaca;
+            color: #7f1d1d;
+        }
+
+        .badge-visual_exposure {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .details-row {
+            background: #f8fafc;
+        }
+
+        .finding-item {
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-left: 3px solid #3b82f6;
+            border-radius: 4px;
+        }
+
+        .toggle-details {
+            cursor: pointer;
+            color: var(--primary);
+            text-decoration: underline;
+            font-size: 0.9rem;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .scan-mode {
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔍 Exposure Detection Tool</h1>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0;">
+            <button class="tab-btn active" onclick="switchTab('manual')">📝 Manual Scan</button>
+            <button class="tab-btn" onclick="switchTab('bounty')">🎯 Bug Bounty Auto-Scan</button>
+        </div>
+
+        <!-- Manual Scan Mode -->
+        <div id="manual-mode" class="scan-mode">
+            <div class="section">
+                <label for="manual_urls">Manual URLs (comma separated)</label>
+                <textarea id="manual_urls" placeholder="https://example.com, https://test.com"></textarea>
+
+                <label for="dork_file">Upload Dorks File (.txt)</label>
+                <input type="file" id="dork_file" accept=".txt">
+            </div>
+
+            <div class="section">
+                <label>
+                    <input type="checkbox" id="authorized"> I confirm I am authorized to scan these targets and accept
+                    the
+                    <a href="#" onclick="alert('Please refer to LEGAL.md in the project root.')">Legal Terms</a>.
+                </label>
+                <p class="disclaimer">Note: Google Search API requires credentials in .env or config.yaml to work.</p>
+            </div>
+
+            <button class="btn" id="scan_btn">🚀 Start Security Audit</button>
+        </div>
+
+        <!-- Bug Bounty Mode -->
+        <div id="bounty-mode" class="scan-mode" style="display: none;">
+            <div class="section">
+                <label for="target_domain">🎯 Target Domain (Bug Bounty Mode)</label>
+                <input type="text" id="target_domain" placeholder="example.com"
+                    style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 16px;">
+                <p class="disclaimer" style="margin-top: 10px;">
+                    <strong>Auto-Scan Mode:</strong> Tool will automatically run 100+ Google dorks including:<br>
+                    • Admin panels & login pages<br>
+                    • Config files (.env, .ini, web.config)<br>
+                    • Database backups & dumps<br>
+                    • API endpoints & exposed keys<br>
+                    • Source code & .git folders<br>
+                    • Log files & error pages<br>
+                    • Subdomain discovery<br>
+                    <strong>Just enter your authorized target domain!</strong>
+                </p>
+            </div>
+
+            <div class="section">
+                <label>
+                    <input type="checkbox" id="bounty_authorized"> ✅ I confirm I am <strong>AUTHORIZED</strong> to scan
+                    this target (Bug Bounty Program / Own Website)
+                </label>
+                <p class="disclaimer" style="color: #dc2626;"><strong>⚠️ Warning:</strong> Scanning unauthorized targets
+                    is illegal!</p>
+            </div>
+
+            <button class="btn" id="bounty_scan_btn"
+                style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);">🎯 Start Bug Bounty
+                Auto-Scan</button>
+        </div>
+
+        <div id="status" style="margin-top: 15px; text-align: center; font-weight: bold;"></div>
+
+        <!-- Live Activity Log -->
+        <div id="log_container"
+            style="margin-top: 20px; display: none; border: 1px solid #cbd5e1; border-radius: 8px; overflow: hidden;">
+            <div
+                style="background: #334155; color: white; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 0.9rem;">📟 Live Activity Feed</h4>
+                <span id="ws_status"
+                    style="font-size: 0.7rem; background: #ef4444; padding: 2px 6px; border-radius: 4px;">Disconnected</span>
+            </div>
+            <div id="activity_log"
+                style="background: #1e293b; color: #38bdf8; font-family: 'Courier New', Courier, monospace; padding: 15px; height: 180px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4;">
+                <div>[SYSTEM] Initializing...</div>
+            </div>
+        </div>
+
+        <!-- OSINT Network Footprint -->
+        <div id="osint_container" style="margin-top: 15px; display: none;">
+            <div style="background: #eff6ff; padding: 15px; border-radius: 8px; border: 1px solid #bfdbfe;">
+                <h4 style="margin: 0 0 10px 0; color: #1e40af;">🛰️ Network Footprint (OSINT)</h4>
+                <div id="osint_summary"
+                    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; font-size: 0.9rem;">
+                    <div><strong>IP Address:</strong> <span id="osint_ip">-</span></div>
+                    <div><strong>Org/Carrier:</strong> <span id="osint_org">-</span></div>
+                    <div><strong>OS:</strong> <span id="osint_os">-</span></div>
+                </div>
+                <div style="margin-top: 10px;">
+                    <strong>Open Ports:</strong>
+                    <div id="osint_ports" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;"></div>
+                </div>
+                <div id="osint_vulns_container" style="margin-top: 10px; display: none;">
+                    <strong>⚠️ Known Vulnerabilities:</strong>
+                    <div id="osint_vulns" style="font-size: 0.8rem; color: #b91c1c; margin-top: 5px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="stats_container" style="margin-top: 15px; display: none;">
+            <div style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0;">📊 Scan Statistics</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                    <div><strong>Total Dorks:</strong> <span id="stat_dorks">0</span></div>
+                    <div><strong>URLs Found:</strong> <span id="stat_urls">0</span></div>
+                    <div><strong>🔴 HIGH Risk:</strong> <span id="stat_high" style="color: #ef4444;">0</span></div>
+                    <div><strong>🟡 MEDIUM Risk:</strong> <span id="stat_medium" style="color: #f59e0b;">0</span></div>
+                    <div><strong>🟢 LOW Risk:</strong> <span id="stat_low" style="color: #10b981;">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results" id="results_container" style="display: none;">
+            <h3>Scan Results</h3>
+            <div id="report_links"></div>
+            <table id="results_table">
+                <thead>
+                    <tr>
+                        <th>URL</th>
+                        <th>Risk Level</th>
+                        <th>Findings</th>
+                    </tr>
+                </thead>
+                <tbody id="results_body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+            const statusEl = document.getElementById('ws_status');
+
+            ws.onopen = function () {
+                if (statusEl) {
+                    statusEl.innerText = 'Connected';
+                    statusEl.style.background = '#10b981';
+                }
+                addLog('WebSocket connection established.');
+            };
+
+            ws.onmessage = function (event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'log') {
+                    addLog(data.message);
+                } else if (data.type === 'result') {
+                    addResultToTable(data.data);
+                } else if (data.type === 'osint') {
+                    displayOSINT(data.data);
+                }
+            };
+
+            ws.onclose = function () {
+                if (statusEl) {
+                    statusEl.innerText = 'Disconnected';
+                    statusEl.style.background = '#ef4444';
+                }
+                setTimeout(connectWebSocket, 2000); // Reconnect
+            };
+        }
+
+        function addLog(message) {
+            const log = document.getElementById('activity_log');
+            const logEntry = document.createElement('div');
+            const time = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `[${time}] ${message}`;
+            log.appendChild(logEntry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function displayOSINT(data) {
+            const container = document.getElementById('osint_container');
+            container.style.display = 'block';
+
+            document.getElementById('osint_ip').innerText = data.ip || 'N/A';
+            document.getElementById('osint_org').innerText = data.org || 'N/A';
+            document.getElementById('osint_os').innerText = data.os || 'N/A';
+
+            const portsDiv = document.getElementById('osint_ports');
+            portsDiv.innerHTML = '';
+            (data.ports || []).forEach(port => {
+                const badge = document.createElement('span');
+                badge.style = "background: #3b82f6; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;";
+                badge.innerText = port;
+                portsDiv.appendChild(badge);
+            });
+
+            if (data.vulns && data.vulns.length > 0) {
+                document.getElementById('osint_vulns_container').style.display = 'block';
+                document.getElementById('osint_vulns').innerText = data.vulns.join(', ');
+            }
+        }
+
+        let globalRowId = 0;
+        function addResultToTable(res) {
+            const resultsContainer = document.getElementById('results_container');
+            const resultsBody = document.getElementById('results_body');
+            resultsContainer.style.display = 'block';
+
+            globalRowId++;
+            const rowId = globalRowId;
+            const mainRow = document.createElement('tr');
+            mainRow.innerHTML = `
+                <td><a href="${res.url}" target="_blank">${res.url}</a></td>
+                <td class="risk-${res.risk_level}">${res.risk_level} (${res.risk_score})</td>
+                <td>
+                    ${res.findings.length} patterns detected
+                    ${res.findings.length > 0 ? `<br><span class="toggle-details" onclick="toggleDetails(${rowId}, this)">Show Details ▼</span>` : ''}
+                </td>
+            `;
+            resultsBody.appendChild(mainRow);
+
+            if (res.findings.length > 0) {
+                const detailsRow = document.createElement('tr');
+                detailsRow.id = `details-${rowId}`;
+                detailsRow.className = 'details-row';
+                detailsRow.style.display = 'none';
+
+                let findingsHtml = '<td colspan="3" style="padding: 20px;">';
+
+                // Add screenshot if available
+                if (res.screenshot) {
+                    findingsHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong>📸 Visual Evidence:</strong><br>
+                            <img src="data:image/jpeg;base64,${res.screenshot}" style="max-width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 5px; cursor: zoom-in;" onclick="window.open(this.src)">
+                        </div>
+                    `;
+                }
+
+                res.findings.forEach(finding => {
+                    findingsHtml += `
+                        <div class="finding-item">
+                            <span class="finding-badge badge-${finding.type}">${finding.type.replace('_', ' ').toUpperCase()}</span>
+                            <br><strong>Match:</strong> <code>${finding.match}</code>
+                            <br><strong>Context:</strong> <em>${finding.context}</em>
+                        </div>
+                    `;
+                });
+                findingsHtml += '</td>';
+                detailsRow.innerHTML = findingsHtml;
+                resultsBody.appendChild(detailsRow);
+            }
+
+            // Update stats
+            if (res.risk_level === 'HIGH') document.getElementById('stat_high').innerText = parseInt(document.getElementById('stat_high').innerText) + 1;
+            if (res.risk_level === 'MEDIUM') document.getElementById('stat_medium').innerText = parseInt(document.getElementById('stat_medium').innerText) + 1;
+            if (res.risk_level === 'LOW') document.getElementById('stat_low').innerText = parseInt(document.getElementById('stat_low').innerText) + 1;
+            document.getElementById('stat_urls').innerText = parseInt(document.getElementById('stat_urls').innerText) + 1;
+        }
+
+        connectWebSocket();
+        function switchTab(mode) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const modes = document.querySelectorAll('.scan-mode');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            modes.forEach(m => m.style.display = 'none');
+
+            if (mode === 'manual') {
+                tabs[0].classList.add('active');
+                document.getElementById('manual-mode').style.display = 'block';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('bounty-mode').style.display = 'block';
+            }
+        }
+
+        function toggleDetails(rowId, toggleBtn) {
+            const detailsRow = document.getElementById(`details-${rowId}`);
+            if (!toggleBtn) toggleBtn = event.target;
+
+            if (detailsRow.style.display === 'none') {
+                detailsRow.style.display = 'table-row';
+                toggleBtn.innerHTML = 'Hide Details ▲';
+            } else {
+                detailsRow.style.display = 'none';
+                toggleBtn.innerHTML = 'Show Details ▼';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('results_container');
+            const resultsBody = document.getElementById('results_body');
+            const statsContainer = document.getElementById('stats_container');
+
+            resultsContainer.style.display = 'block';
+            resultsBody.innerHTML = '';
+
+            // Update Report Links
+            const reportLinks = document.getElementById('report_links');
+            if (data.reports) {
+                reportLinks.innerHTML = `
+                    <div style="margin: 15px 0; display: flex; gap: 10px; justify-content: center;">
+                        <a href="/download/${data.reports.json.split('/').pop()}" class="btn" style="width: auto; background: #64748b; font-size: 0.8rem; padding: 8px 15px;">📥 Download JSON</a>
+                        <a href="/download/${data.reports.csv.split('/').pop()}" class="btn" style="width: auto; background: #64748b; font-size: 0.8rem; padding: 8px 15px;">📥 Download CSV</a>
+                    </div>
+                `;
+            }
+
+            // Display stats if available
+            if (data.stats) {
+                statsContainer.style.display = 'block';
+                document.getElementById('stat_dorks').innerText = data.stats.total_dorks || 0;
+                document.getElementById('stat_urls').innerText = data.stats.urls_found || 0;
+                document.getElementById('stat_high').innerText = data.stats.high_risk || 0;
+                document.getElementById('stat_medium').innerText = data.stats.medium_risk || 0;
+                document.getElementById('stat_low').innerText = data.stats.low_risk || 0;
+            }
+
+            let rowId = 0;
+            data.results.forEach(res => {
+                rowId++;
+                const mainRow = document.createElement('tr');
+                mainRow.innerHTML = `
+                    <td><a href="${res.url}" target="_blank">${res.url}</a></td>
+                    <td class="risk-${res.risk_level}">${res.risk_level} (${res.risk_score})</td>
+                    <td>
+                        ${res.findings.length} patterns detected
+                        ${res.findings.length > 0 ? `<br><span class="toggle-details" onclick="toggleDetails(${rowId}, this)">Show Details ▼</span>` : ''}
+                    </td>
+                `;
+                resultsBody.appendChild(mainRow);
+
+                if (res.findings.length > 0) {
+                    const detailsRow = document.createElement('tr');
+                    detailsRow.id = `details-${rowId}`;
+                    detailsRow.className = 'details-row';
+                    detailsRow.style.display = 'none';
+
+                    let findingsHtml = '<td colspan="3" style="padding: 20px;">';
+                    res.findings.forEach(finding => {
+                        findingsHtml += `
+                            <div class="finding-item">
+                                <span class="finding-badge badge-${finding.type}">${finding.type.replace('_', ' ').toUpperCase()}</span>
+                                <br><strong>Match:</strong> <code>${finding.match}</code>
+                                <br><strong>Context:</strong> <em>${finding.context}</em>
+                            </div>
+                        `;
+                    });
+                    findingsHtml += '</td>';
+                    detailsRow.innerHTML = findingsHtml;
+                    resultsBody.appendChild(detailsRow);
+                }
+            });
+        }
+
+        // Bug Bounty Auto-Scan
+        document.getElementById('bounty_scan_btn').addEventListener('click', async () => {
+            const auth = document.getElementById('bounty_authorized').checked;
+            const domain = document.getElementById('target_domain').value.trim();
+
+            if (!auth) {
+                alert("You MUST confirm authorization before scanning!");
+                return;
+            }
+
+            if (!domain) {
+                alert("Please enter a target domain!");
+                return;
+            }
+
+            const btn = document.getElementById('bounty_scan_btn');
+            const status = document.getElementById('status');
+            const resultsContainer = document.getElementById('results_container');
+            const logContainer = document.getElementById('log_container');
+            const activityLog = document.getElementById('activity_log');
+            const statsContainer = document.getElementById('stats_container');
+            const osintContainer = document.getElementById('osint_container');
+
+            // Reset UI
+            btn.disabled = true;
+            status.innerText = `⏳ Running 100+ automated dorks for ${domain}... This will take several minutes.`;
+            resultsContainer.style.display = 'none';
+            osintContainer.style.display = 'none';
+            logContainer.style.display = 'block';
+            statsContainer.style.display = 'block';
+            activityLog.innerHTML = '<div>[SYSTEM] Starting Bug Bounty Auto-Scan...</div>';
+            document.getElementById('results_body').innerHTML = '';
+
+            // Reset Stats
+            document.getElementById('stat_high').innerText = '0';
+            document.getElementById('stat_medium').innerText = '0';
+            document.getElementById('stat_low').innerText = '0';
+            document.getElementById('stat_urls').innerText = '0';
+            document.getElementById('stat_dorks').innerText = '0';
+
+            const formData = new FormData();
+            formData.append('target_domain', domain);
+            formData.append('authorized', auth);
+
+            try {
+                const response = await fetch('/bug-bounty-scan', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    status.innerText = `✅ ${data.message}`;
+                    displayResults(data);
+                } else {
+                    status.innerText = "❌ Error: " + data.detail;
+                }
+            } catch (error) {
+                status.innerText = "❌ Connection failed: " + error.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Manual Scan
+        document.getElementById('scan_btn').addEventListener('click', async () => {
+            const authorized = document.getElementById('authorized').checked;
+            if (!authorized) {
+                alert("You must confirm authorization before scanning.");
+                return;
+            }
+
+            const btn = document.getElementById('scan_btn');
+            const status = document.getElementById('status');
+            const resultsContainer = document.getElementById('results_container');
+            const resultsBody = document.getElementById('results_body');
+            const logContainer = document.getElementById('log_container');
+            const activityLog = document.getElementById('activity_log');
+            const statsContainer = document.getElementById('stats_container');
+            const osintContainer = document.getElementById('osint_container');
+
+            // Reset UI
+            btn.disabled = true;
+            status.innerText = "⏳ Scan in progress... This may take a few minutes.";
+            resultsContainer.style.display = 'none';
+            osintContainer.style.display = 'none';
+            logContainer.style.display = 'block';
+            statsContainer.style.display = 'block';
+            activityLog.innerHTML = '<div>[SYSTEM] Starting Manual Scan...</div>';
+            resultsBody.innerHTML = '';
+
+            // Reset Stats
+            document.getElementById('stat_high').innerText = '0';
+            document.getElementById('stat_medium').innerText = '0';
+            document.getElementById('stat_low').innerText = '0';
+            document.getElementById('stat_urls').innerText = '0';
+            document.getElementById('stat_dorks').innerText = '0';
+
+            const formData = new FormData();
+            formData.append('manual_urls', document.getElementById('manual_urls').value);
+            formData.append('authorized', authorized);
+
+            const fileInput = document.getElementById('dork_file');
+            if (fileInput.files.length > 0) {
+                formData.append('dork_file', fileInput.files[0]);
+            }
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    status.innerText = "✅ Scan Complete!";
+                    displayResults(data);
+                } else {
+                    status.innerText = "❌ Error: " + data.detail;
+                }
+            } catch (error) {
+                status.innerText = "❌ Connection failed: " + error.message;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

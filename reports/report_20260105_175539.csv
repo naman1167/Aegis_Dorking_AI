@@ -1,0 +1,6 @@
+timestamp,url,risk_score,risk_level,finding_type,match,context
+20260105_175539,https://zonetransfer.me/,50,MEDIUM,email,pippa@zonetransfer.me,"...mber to call or email Pippa on +44 123 4567890 or pippa@zonetransfer.me when making DNS changes"" dc-office.zonetransfer.m..."
+20260105_175539,https://zonetransfer.me/,50,MEDIUM,email,robin@digi.ninja,"...""ZoneTransfer.me service provided by Robin Wood - robin@digi.ninja. See http://digi.ninja/projects/zonetransferme.ph..."
+20260105_175539,https://zonetransfer.me/,50,MEDIUM,email,customer-service@zonetransfer.me,".... 3333 IN      NAPTR 2 3 ""P"" ""E2U+sip"" ""!^.*$!sip:customer-service@zonetransfer.me!"" . sqli.zonetransfer.me. 300 IN      TXT ""' or 1..."
+20260105_175539,https://zonetransfer.me/,50,MEDIUM,email,pippa@zonetransfer.me,"...ber to call or email Pippa on + 44 123 4567890 or pippa@zonetransfer.me when making DNS changes "" zonetransfer.me.	301	IN..."
+20260105_175539,https://zonetransfer.me/,50,MEDIUM,email,robin@digininja.org,...ZoneTransfer.me service provided by Robin Wood - robin@digininja.org. See www.digininja.org/blog/zonetransferme.php fo...

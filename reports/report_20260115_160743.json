@@ -1,0 +1,8 @@
+[
+    {
+        "url": "http://example.com",
+        "findings": [],
+        "risk_score": 0,
+        "risk_level": "NONE"
+    }
+]

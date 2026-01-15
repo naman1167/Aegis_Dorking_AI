@@ -1,0 +1,8 @@
+intitle:"index of" "parent directory"
+intitle:"index of" "backup"
+filetype:sql "INSERT INTO" "users"
+filetype:env DB_PASSWORD
+filetype:log "password"
+inurl:admin login
+intitle:"index of" config.php
+filetype:bak "password"

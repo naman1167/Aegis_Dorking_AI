@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: google-dorking-ai
+    env: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GOOGLE_CSE_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SHODAN_API_KEY
+        sync: false
+    healthCheckPath: /

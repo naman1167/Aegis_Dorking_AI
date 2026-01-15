@@ -1,0 +1,34 @@
+google_search:
+  max_results_per_dork: 10
+  cse_id: "" # Google Custom Search Engine ID
+  api_key: "" # Google API Key
+
+scraper:
+  headless: true
+  timeout: 10
+  rate_limit_delay: 2 # seconds
+
+ai_settings:
+  use_ml: true
+  use_nlp: true
+  use_vision: true # New: AI Visual Auditor
+  ml_confidence_threshold: 0.6
+
+osint:
+  shodan_enabled: true
+  censys_enabled: false
+
+scoring:
+  weights:
+    email: 10
+    password_alike: 40
+    api_key: 50
+    private_key: 50
+    sql_dump: 40
+    sensitive_file: 30
+    credential_leak: 50
+    api_key_exposure: 50
+    database_configuration: 50
+    private_key_exposure: 60
+    authentication_token: 40
+  max_score: 100
