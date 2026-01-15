@@ -13,4 +13,6 @@ services:
         sync: false
       - key: SHODAN_API_KEY
         sync: false
+      - key: PORT
+        value: 10000
     healthCheckPath: /

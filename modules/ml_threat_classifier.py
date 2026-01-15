@@ -1,4 +1,9 @@
-from transformers import pipeline
+try:
+    from transformers import pipeline
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
 from typing import List, Dict, Any
 import warnings
 warnings.filterwarnings('ignore')
@@ -22,6 +27,10 @@ class MLThreatClassifier:
             "benign content"
         ]
         
+        if not TRANSFORMERS_AVAILABLE:
+            print("[!] Transformers not installed. ML classification disabled.")
+            return
+
         try:
             print("[*] Loading zero-shot classification model (using distilbart for speed)...")
             self.classifier = pipeline(
