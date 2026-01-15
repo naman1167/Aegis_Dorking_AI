@@ -383,6 +383,11 @@
                     addResultToTable(data.data);
                 } else if (data.type === 'osint') {
                     displayOSINT(data.data);
+                } else if (data.type === 'final_results') {
+                    document.getElementById('status').innerText = `✅ ${data.data.message}`;
+                    displayResults(data.data);
+                    document.getElementById('scan_btn').disabled = false;
+                    document.getElementById('bounty_scan_btn').disabled = false;
                 }
             };
 
@@ -633,15 +638,13 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    status.innerText = `✅ ${data.message}`;
-                    displayResults(data);
+                    status.innerText = `⏳ ${data.message}... Monitoring live feed.`;
                 } else {
                     status.innerText = "❌ Error: " + data.detail;
+                    btn.disabled = false;
                 }
             } catch (error) {
-                status.innerText = "❌ Connection failed: " + error.message;
-            } finally {
-                btn.disabled = false;
+                status.innerText = "❌ Scan started (Connection closed by server, monitoring live feed...)";
             }
         });
 
@@ -696,15 +699,13 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    status.innerText = "✅ Scan Complete!";
-                    displayResults(data);
+                    status.innerText = "⏳ Scan initiated... Monitor the live activity feed below.";
                 } else {
                     status.innerText = "❌ Error: " + data.detail;
+                    btn.disabled = false;
                 }
             } catch (error) {
-                status.innerText = "❌ Connection failed: " + error.message;
-            } finally {
-                btn.disabled = false;
+                status.innerText = "❌ Scan started (Monitoring live feed...)";
             }
         });
     </script>
