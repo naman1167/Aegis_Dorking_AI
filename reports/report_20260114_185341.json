@@ -1,8 +1,0 @@
-[
-    {
-        "url": "http://testphp.vulnweb.com",
-        "findings": [],
-        "risk_score": 0,
-        "risk_level": "NONE"
-    }
-]
